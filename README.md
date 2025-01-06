@@ -4,6 +4,14 @@
 
 Originally developed as an extension of the [video-streamer](https://github.com/mxcube/video-streamer) project by the [MXCuBE](https://github.com/mxcube) organization, `Argussight` can also operate as a standalone application. Its flexible design allows it to be reconfigured for integration with other components, making it adaptable to various use cases.
 
+## Advantages of using Argussight
+
+- **Enhanced User Experience**: Multiple streams could be displayed at once from the same source, providing a comprehensive view from different angles and/or sources.
+
+- **Facilitates Usage of Computer Vision Algorithms**: Developers can make use of different computer vision algorithms, directly on the images and do not need to handle the complexity of handling video-loading or streaming.
+
+- **On-the-Fly Configuration**: The system can dynamically adjust streams, such as changing parameters for video anlaysis, change position of region of interest or simply switching between views according to user preferences, withou needing to restart or reconfigure the entire process.
+
 ## Design Overview
 
 `Argussight` is built around four key components, each playing a vital role in its functionality.
@@ -18,20 +26,22 @@ Originally developed as an extension of the [video-streamer](https://github.com/
 
 ![Argussight Overview](./assets/Overview.svg)
 
-## Advantages of using Argussight
+## Documentation 📚
 
-- **Enhanced User Experience**: Multiple streams could be displayed at once from the same source, providing a comprehensive view from different angles and/or sources.
+Check out the full [documentation](https://mxcube.github.io/argussight/) to explore everything, this project has to offer! Including:
 
-- **Facilitates Usage of Computer Vision Algorithms**: Developers can make use of different computer vision algorithms, directly on the images and do not need to handle the complexity of handling video-loading or streaming.
-
-- **On-the-Fly Configuration**: The system can dynamically adjust streams, such as changing parameters for video anlaysis, change position of region of interest or simply switching between views according to user preferences, withou needing to restart or reconfigure the entire process.
+- Information about all natively integrated video-related processes
+- A detailed explanation about the project's core functionalities
+- A comprehensive guide on how to start and run the project
+- A developers guide
+- and more!
 
 ## Installation
 
 First you need to clone the repository.
 
 ```
-git clone https://github.com/walesch-yan/argussight.git
+git clone https://github.com/mxcube/argussight.git
 
 # Navigate to the newly created directory
 cd argussight
@@ -106,4 +116,4 @@ except Exception as e:
 
 ### Access your streams
 
-To access your streams, you first need a running streaming process. To create one, you need to make a process that inherits the `Streamer` class. Please refer to the documentation (**ToDo**) on how to do that. If your class inherits `Streamer` and is correctly configured in the `config.yaml` file, the `Argussight` class will take care of adding every instance of your class to the `Abstraction-Layer`. To access the streams from outside, you can then create a websocket connection to `ws://localhost:7000/ws/${name}`, where `localhost:7000` is the default location of the `Abstraction-Layer` (configurable in `config.yaml`), and `name` is the unique name of your process instance.
+To access your streams, you first need a running streaming process. To create one, you need to make a process that inherits the `Streamer` class. Please refer to the [documentation](https://mxcube.github.io/argussight/devs/vprocess/#streamer) on how to do that. If your class inherits `Streamer` and is correctly configured in the `config.yaml` file, the `Argussight` class will take care of adding every instance of your class to the `Abstraction-Layer`. To access the streams from outside, you can then create a websocket connection to `ws://localhost:7000/ws/${name}`, where `localhost:7000` is the default location of the `Abstraction-Layer` (configurable in `config.yaml`), and `name` is the unique name of your process instance.

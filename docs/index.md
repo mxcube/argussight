@@ -27,4 +27,4 @@ Be sure to read our [Contributing Guidelines](devs/contributing.md) before getti
 
 ---
 
-Looking for help? Visit the [FAQ](faq.md) or check out the [repository page](https://github.com/walesch-yan/argussight).
+Looking for help? Visit the [FAQ](faq.md) or check out the [repository page](https://github.com/mxcube/argussight).

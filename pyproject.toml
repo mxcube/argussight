@@ -1,10 +1,14 @@
 [tool.poetry]
 name = "argussight"
 version = "0.1.0"
-description = "A python package for computer vision tasks"
-authors = ["The MXCuBE collaboration <<mxcube@esrf.fr>"]
-license = "LGPL-3.0-or-later"
+description = "An addition to MXCuBEWeb enabling simultaneous video streaming and distributed computer vision tasks."
+authors = ["Yan Walesch <<yan.walesch@esrf.fr>"]
+license = "MIT"
 readme = "README.md"
+repository = "https://github.com/mxcube/argussight"
+homepage = "https://github.com/mxcube/argussight"
+documentation = "https://mxcube.github.io/argussight/"
+keywords = ["MXCuBEWeb", "video streaming", "computer vision", "multistream", "process management"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"

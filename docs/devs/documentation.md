@@ -1,6 +1,6 @@
 # Working with Documentation
 
-This documentation is automatically built and published from the contents of [Argussight's](https://github.com/walesch-yan/argussight) repository. Each time the repository’s `master` branch is updated, documentation is regenerated.
+This documentation is automatically built and published from the contents of [Argussight's](https://mxcube/argussight) repository. Each time the repository’s `master` branch is updated, documentation is regenerated.
 
 If you want to modify this documentation, make a [pull request](contributing.md#submitting-pull-requests) to the repository with your suggested changes.
 

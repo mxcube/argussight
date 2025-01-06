@@ -1,13 +1,13 @@
 # Contributing to Argussight
 
-Thank you for considering contributing to [Argussight](https://github.com/walesch-yan/argussight)! Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Before diving into your first contribution, please read our guidelines. They aim at helping the community to maintain a stable and reusable code.
+Thank you for considering contributing to [Argussight](https://github.com/mxcube/argussight)! Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Before diving into your first contribution, please read our guidelines. They aim at helping the community to maintain a stable and reusable code.
 
 ## Reporting Issues
 
 If you encounter a bug or have a question, do not hesitate to:
 
-- Check the [issues](https://github.com/walesch-yan/argussight/issues) to see if it has already been reported.
-- Create a [new issue](https://github.com/walesch-yan/argussight/issues/new) with a clear and descriptive title and include:
+- Check the [issues](https://github.com/mxcube/argussight/issues) to see if it has already been reported.
+- Create a [new issue](https://github.com/mxcube/argussight/issues/new) with a clear and descriptive title and include:
     - Steps to reproduce
     - Expected vs actual results
     - Any relevant screenshots or logs
@@ -16,7 +16,7 @@ If you encounter a bug or have a question, do not hesitate to:
 
 ## Feature Requests
 
-We welcome feature requests! Please submit them via [new issue](https://github.com/walesch-yan/argussight/issues/new) and provide as much detail as possible.
+We welcome feature requests! Please submit them via [new issue](https://github.com/mxcube/argussight/issues/new) and provide as much detail as possible.
 
 ---
 
@@ -24,7 +24,7 @@ We welcome feature requests! Please submit them via [new issue](https://github.c
 
 Pull requests (PRs) are used to submit new code to the repository; they help developers review and discuss the proposed changes. To avoid any conflicts in the code base, it is important to keep your local git repository synchronised with the latest code in the upstream repository. If the repository is checked out directly, then use `git pull --rebase` to obtain the latest code; if a fork is used, then add the official argussight repository to the list of remotes.
 
-PRs should be made against the [master](https://github.com/walesch-yan/argussight/tree/master) branch. Herefore, you should create a new branch and make a PR according to the description below
+PRs should be made against the [master](https://github.com/mxcube/argussight/tree/master) branch. Herefore, you should create a new branch and make a PR according to the description below
 
 ### Preparing a new commit
 1. Make sure that you are working with the latest changes from the master branch. From the root of the repository do:
