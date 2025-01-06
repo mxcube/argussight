@@ -1,7 +1,7 @@
 ---
 
 site_name: Argussight
-site_url: "https://github.com/walesch-yan/argussight"
+site_url: "https://github.com/mxcube/argussight"
 
 nav:
   - Home: index.md
