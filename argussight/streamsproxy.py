@@ -1,10 +1,14 @@
 import websockets
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
+from argussight.logger import configure_logger
+
 app = FastAPI()
 
 # Active streams storage for tracking different paths
 active_streams = {}
+
+logger = configure_logger("StreamsProxy", "streams_proxy")
 
 
 @app.post("/add-stream")
@@ -39,17 +43,17 @@ async def websocket_proxy(websocket: WebSocket, path: str):
     try:
         # Connect to the original WebSocket server
         async with websockets.connect(original_ws_url) as original_ws:
-            print(f"Connected to original WebSocket stream at {original_ws_url}")
+            logger.info(f"Connected to original WebSocket stream at {original_ws_url}")
 
             # Relay data between original WebSocket and JSMpeg client
             while True:
                 binary_data = await original_ws.recv()
                 await websocket.send_bytes(binary_data)
     except (WebSocketDisconnect, websockets.exceptions.ConnectionClosed) as e:
-        print(f"WebSocket disconnected: {e}")
+        logger.error(f"WebSocket disconnected: {e}")
     finally:
         await websocket.close()
-        print("Connection with JSMpeg client closed")
+        logger.info("Connection with JSMpeg client closed")
 
 
 def run(port: int = 7000) -> None:

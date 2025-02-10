@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+from logging import Logger
 from typing import Any, Dict, Tuple
 
 from PIL import Image
@@ -17,25 +18,28 @@ def remove_start_end(main: str, start: str, end: str) -> str:
     return main
 
 
-def delete_all_files(folder_path: str) -> None:
+def delete_all_files(folder_path: str, logger: Logger) -> None:
     if os.path.exists(folder_path):
         try:
             # Remove the entire directory tree
             shutil.rmtree(folder_path)
-            print(f"Deleted {folder_path} and all its contents.")
+            logger.info(f"Deleted {folder_path} and all its contents.")
         except Exception as e:
-            print(f"Failed to delete {folder_path}: {e}")
+            logger.error(f"Failed to delete {folder_path}")
+            logger.exception(e)
     else:
-        print(f"The folder {folder_path} does not exist.")
+        logger.info(f"The folder {folder_path} does not exist.")
 
 
 class Recorder(VideoSaver):
-    def __init__(self, collector_config, exposed_parameters: Dict[str, Any]) -> None:
-        super().__init__(collector_config, exposed_parameters)
+    def __init__(
+        self, collector_config, exposed_parameters: Dict[str, Any], logger: Logger
+    ) -> None:
+        super().__init__(collector_config, exposed_parameters, logger)
         self._temp_counter = 0
 
         # Make sure that there are no files in the temp folder from old recording failures
-        delete_all_files(self._parameters["temp_folder"])
+        delete_all_files(self._parameters["temp_folder"], self._logger)
         os.makedirs(self._parameters["temp_folder"])
 
         self._parameters["temp_folder"] = os.path.join(
@@ -104,7 +108,7 @@ class Recorder(VideoSaver):
 
     def _stop_record(self, images_names, temp_folder):
         self.save_iterable(images_names)
-        delete_all_files(temp_folder)
+        delete_all_files(temp_folder, self._logger)
 
     def _get_all_parameters(self) -> Dict[str, Any]:
         # The "recording" parameter state, should be kept in exposed_parameters and _parameters,

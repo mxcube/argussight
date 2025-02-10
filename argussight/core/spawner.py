@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import queue
 import threading
+from logging import Logger
 from typing import Any, Dict, List, Tuple
 
 import psutil
@@ -15,6 +16,7 @@ from argussight.core.helper_functions import find_close_key, find_free_port
 from argussight.core.manager import Manager
 from argussight.core.video_processes.streamer.streamer import Streamer
 from argussight.core.video_processes.vprocess import ProcessError, Vprocess
+from argussight.logger import configure_logger
 
 
 class Spawner:
@@ -27,11 +29,14 @@ class Spawner:
         self.collector_config = collector_config
         self._settings_manager = multiprocessing.Manager()
         self._streams = set([])
+        self._logger = configure_logger("Spawner", "Spawner")
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.load_config(os.path.join(current_dir, "configurations/config.yaml"))
 
-        print(f"running stream_layer on port {self.config['streams_layer_port']}")
+        self._logger.info(
+            f"running stream_layer on port {self.config['streams_layer_port']}"
+        )
         streams_layer_process = multiprocessing.Process(
             target=StreamsProxy.run, args=(self.config["streams_layer_port"],)
         )
@@ -59,13 +64,15 @@ class Spawner:
                 self._streamer_types.append(key)
 
     def create_worker(
-        self, worker_type: str, free_port, settings: Dict[str, Any]
+        self, worker_type: str, free_port, settings: Dict[str, Any], logger: Logger
     ) -> Vprocess:
         if worker_type in self._streamer_types:
             return self._worker_classes.get(worker_type)(
-                self.collector_config, free_port, settings
+                self.collector_config, free_port, settings, logger
             )
-        return self._worker_classes.get(worker_type)(self.collector_config, settings)
+        return self._worker_classes.get(worker_type)(
+            self.collector_config, settings, logger
+        )
 
     def add_process(
         self,
@@ -121,7 +128,7 @@ class Spawner:
         )
         self._streams.add(name)
 
-    def start_process(self, name, type) -> None:
+    def start_process(self, name: str, type: str) -> None:
         if name in self._processes:
             raise ProcessError(
                 f"Process names must be unique. '{name}' already exists. Either terminate '{name}' or choose a different unique name"
@@ -134,13 +141,14 @@ class Spawner:
 
         free_port = find_free_port(self.config["streams_starting_port"])
         settings = self._settings_manager.dict()
-        worker_instance = self.create_worker(type, free_port, settings)
+        logger = configure_logger(name, type)
+        worker_instance = self.create_worker(type, free_port, settings, logger)
         command_queue = multiprocessing.Queue()
         response_queue = multiprocessing.Queue()
         p = multiprocessing.Process(
             target=worker_instance.run, args=(command_queue, response_queue)
         )
-        print(f"started {name} of type {type}")
+        self._logger.info(f"started {name} of type {type}")
         p.start()
         if isinstance(worker_instance, Streamer):
             self.add_stream(name, free_port, worker_instance.get_stream_id())
@@ -179,7 +187,7 @@ class Spawner:
             parent = psutil.Process(p.pid)
             children = parent.children(recursive=True)
             for child in children:
-                print(f"Terminating child process: {child.pid}")
+                self._logger.info(f"Terminating child process: {child.pid}")
                 child.terminate()
             # now kill the process itself and clean up
             p.terminate()
@@ -194,7 +202,7 @@ class Spawner:
                 )
                 self._streams.discard(name)
 
-            print(f"terminated {name} of type {worker_type}")
+            self._logger.info(f"terminated {name} of type {worker_type}")
             if (
                 worker_type in self._restricted_classes
                 and self.check_restricted_access(worker_type)
@@ -219,7 +227,7 @@ class Spawner:
 
         if name in self._managers_dict:
             del self._managers_dict[name]
-            print("manager is not alive anymore but hasn't finished")
+            self._logger.error("manager is not alive anymore but hasn't finished")
 
     def send_command_to_manager(
         self, name: str, command: str, args

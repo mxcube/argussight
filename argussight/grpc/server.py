@@ -1,3 +1,4 @@
+import logging
 import time
 from concurrent import futures
 
@@ -104,7 +105,7 @@ def serve(collector_config):
     )
     server.add_insecure_port("[::]:50051")
     server.start()
-    print("Server started on port 50051")
+    logging.getLogger("GRPC Server").info("Server started on port 50051")
     try:
         while True:
             time.sleep(86400)  # Keep server running

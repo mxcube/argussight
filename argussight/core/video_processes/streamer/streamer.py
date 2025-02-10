@@ -3,6 +3,7 @@ import json
 import queue
 import subprocess
 import uuid
+from logging import Logger
 from multiprocessing import Queue
 from typing import Any, Dict
 
@@ -14,9 +15,13 @@ from argussight.core.video_processes.vprocess import FrameFormat, Vprocess
 
 class Streamer(Vprocess):
     def __init__(
-        self, collector_config, free_port, exposed_parameters: Dict[str, Any]
+        self,
+        collector_config,
+        free_port,
+        exposed_parameters: Dict[str, Any],
+        logger: Logger,
     ) -> None:
-        super().__init__(collector_config, exposed_parameters)
+        super().__init__(collector_config, exposed_parameters, logger)
 
         self._processed_frame = None  # this should be changed in process_frame
         self._frame_format = (
@@ -48,7 +53,8 @@ class Streamer(Vprocess):
                     self.process_frame()
                     self.stream()
         except redis.exceptions.ConnectionError as e:
-            print(f"Connection error {e} by {type(self)}")
+            self._logger.error("Connection error")
+            self._logger.exception(e)
 
     def stream(self) -> None:
         if self._processed_frame is not None:

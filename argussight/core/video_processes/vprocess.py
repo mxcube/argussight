@@ -7,6 +7,7 @@ import time
 import warnings
 from datetime import datetime
 from enum import Enum
+from logging import Logger
 from multiprocessing import Queue
 from typing import Any, Dict, Tuple
 
@@ -35,10 +36,13 @@ class FrameFormat(Enum):
 
 
 class Vprocess:
-    def __init__(self, collector_config, exposed_parameters: Dict[str, Any]) -> None:
+    def __init__(
+        self, collector_config, exposed_parameters: Dict[str, Any], logger: Logger
+    ) -> None:
         self._current_frame_number = -1
         self._current_frame = None
         self._missed_frames = 0
+        self._logger = logger
 
         # Please change the following three variables (if you need to) in your subclasses (not here!)
         self._frame_format: FrameFormat = (
@@ -93,7 +97,7 @@ class Vprocess:
             return direct_path
 
         # check if file is inside a folder of base_path
-        for root, dirs, files in os.walk(base_path):
+        for root, _, files in os.walk(base_path):
             if file_name in files:
                 return os.path.join(root, file_name)
         return None
@@ -166,9 +170,9 @@ class Vprocess:
         if self._current_frame_number != -1:
             self._missed_frames += current_frame_number - self._current_frame_number - 1
             if current_frame_number > self._current_frame_number + 1:
-                print(f"Frames Missed in Total: {self._missed_frames}")
+                self._logger.warning(f"Frames Missed in Total: {self._missed_frames}")
         else:
-            print(f"Started reading at frame {current_frame_number}")
+            self._logger.info(f"Started reading at frame {current_frame_number}")
         self._current_frame_number = current_frame_number
 
     def copy_frame(self, frame_data: bytes, frame_size: Tuple[int, int, int]) -> None:
@@ -201,7 +205,8 @@ class Vprocess:
                     self.read_frame(json.loads(message["data"]))
                     self.process_frame()
         except redis.exceptions.ConnectionError as e:
-            print(f"Connection error {e} by {type(self)}")
+            self._logger.error("Cannot establish redis connection")
+            self._logger.exception(f"{e}")
 
     def process_frame(self) -> None:
         pass
@@ -230,7 +235,7 @@ class Test(Vprocess):
         self._commands["print"] = self.print
 
     def run(self, command_queue: Queue, response_queue: Queue) -> None:
-        print("Running test process")
+        self._logger.info("Running test process")
         try:
             order, args = command_queue.get(timeout=self._command_timeout)
             self.handle_command(order, response_queue, args)
