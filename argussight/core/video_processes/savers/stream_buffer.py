@@ -1,12 +1,15 @@
 from collections import deque
+from logging import Logger
 from typing import Any, Dict
 
 from argussight.core.video_processes.savers.video_saver import VideoSaver
 
 
 class StreamBuffer(VideoSaver):
-    def __init__(self, collector_config, exposed_parameters: Dict[str, Any]) -> None:
-        super().__init__(collector_config, exposed_parameters)
+    def __init__(
+        self, collector_config, exposed_parameters: Dict[str, Any], logger: Logger
+    ) -> None:
+        super().__init__(collector_config, exposed_parameters, logger)
         self._queue = deque(maxlen=self._parameters["max_queue_len"])
 
     @classmethod

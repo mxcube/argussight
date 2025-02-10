@@ -1,5 +1,6 @@
 from collections import deque
 from datetime import datetime
+from logging import Logger
 from typing import Any, Dict, Tuple
 
 import cv2
@@ -31,9 +32,13 @@ class Point:
 
 class FlowDetection(Streamer):
     def __init__(
-        self, collector_config, free_port, exposed_parameters: Dict[str, Any]
+        self,
+        collector_config,
+        free_port,
+        exposed_parameters: Dict[str, Any],
+        logger: Logger,
     ) -> None:
-        super().__init__(collector_config, free_port, exposed_parameters)
+        super().__init__(collector_config, free_port, exposed_parameters, logger)
         self._previous_frame = None
         self._min_distance = 50
         self._p0 = []

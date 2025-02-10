@@ -3,6 +3,7 @@ import concurrent.futures
 import os
 from datetime import datetime
 from enum import Enum
+from logging import Logger
 from multiprocessing import Queue
 from typing import Any, Dict, Iterable, Tuple
 
@@ -20,8 +21,10 @@ class SaveFormat(Enum):
 
 
 class VideoSaver(Vprocess):
-    def __init__(self, collector_config, exposed_parameters: Dict[str, Any]) -> None:
-        super().__init__(collector_config, exposed_parameters)
+    def __init__(
+        self, collector_config, exposed_parameters: Dict[str, Any], logger: Logger
+    ) -> None:
+        super().__init__(collector_config, exposed_parameters, logger)
         self._command_timeout = 0.04
         self._recording_start_time = None
 
@@ -114,9 +117,9 @@ class VideoSaver(Vprocess):
         if self._current_frame_number != -1:
             self._missed_frames += current_frame_number - self._current_frame_number - 1
             if current_frame_number > self._current_frame_number + 1:
-                print(f"Frames Missed in Total: {self._missed_frames}")
+                self._logger.warning(f"Frames Missed in Total: {self._missed_frames}")
         else:
-            print(f"Started reading at frame {current_frame_number}")
+            self._logger.info(f"Started reading at frame {current_frame_number}")
         self._current_frame_number = current_frame_number
 
         if self._parameters["recording"]:

@@ -1,4 +1,5 @@
 from datetime import datetime
+from logging import Logger
 from typing import Any, Dict
 
 import cv2
@@ -9,9 +10,13 @@ from argussight.core.video_processes.streamer.streamer import Streamer
 
 class OpticalFlowDetection(Streamer):
     def __init__(
-        self, collector_config, free_port, exposed_parameters: Dict[str, Any]
+        self,
+        collector_config,
+        free_port,
+        exposed_parameters: Dict[str, Any],
+        logger: Logger,
     ) -> None:
-        super().__init__(collector_config, free_port, exposed_parameters)
+        super().__init__(collector_config, free_port, exposed_parameters, logger)
         self._previous_frame = None
         self._speeds = []
         self._current_speed = 0

@@ -25,6 +25,7 @@ Flask = "^3.0.3"
 requests = "^2.32.3"
 websocket-client = "^1.8.0"
 mxcube-video-streamer = ">=1.7.0"
+colorlog = "^6.9.0"
 
 [tool.poetry.scripts]
 argussight = "argussight.main:run"
