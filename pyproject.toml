@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "argussight"
-version = "0.1.0"
+version = "0.2.0"
 description = "An addition to MXCuBEWeb enabling simultaneous video streaming and distributed computer vision tasks."
 authors = ["Yan Walesch <<yan.walesch@esrf.fr>"]
 license = "MIT"
