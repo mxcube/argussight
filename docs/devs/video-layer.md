@@ -2,6 +2,8 @@
 
 The abstraction layer bridges outgoing streams with connections from other projects, ensuring a seamless and consistent way to forward WebSocket (WS) connections. This design decouples stream handling from client connections, improving scalability and maintainability.
 
+![Abstraction-Layer](../images/Abstraction-Layer.svg)
+
 ---
 
 ## Features
@@ -81,7 +83,7 @@ except Exception:
 
 ## Access Streams
 
-To access an added stream, you must establish a WebSocket connection to `ws://<host>:<port>/<name>`, where `<host>` and `<port>` refer to the host and port of the abstraction-layer, and `<name>` is the unique identifier of the stream you wish to access.
+To access an added stream, you must establish a WebSocket connection to `ws://<host>:<port>/ws/<name>`, where `<host>` and `<port>` refer to the host and port of the abstraction-layer, and `<name>` is the unique identifier of the stream you wish to access.
 
 ### Get a list of all available streams
 
