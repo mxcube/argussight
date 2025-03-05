@@ -52,7 +52,7 @@ def configure_logger(name: str, type: str) -> logging.Logger:
         log_colors={
             "DEBUG": "cyan",
             "INFO": "blue",
-            "WARNING": "orange",
+            "WARNING": "yellow",
             "ERROR": "red",
             "CRITICAL": "magenta",
         },
