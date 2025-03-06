@@ -1,17 +1,17 @@
-[tool.poetry]
+[project]
 name = "argussight"
 version = "0.2.0"
 description = "An addition to MXCuBEWeb enabling simultaneous video streaming and distributed computer vision tasks."
-authors = ["Yan Walesch <<yan.walesch@esrf.fr>"]
+authors = [{name = "Yan Walesch", email = "yan.walesch@esrf.fr"}]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/mxcube/argussight"
-homepage = "https://github.com/mxcube/argussight"
-documentation = "https://mxcube.github.io/argussight/"
+urls.repository = "https://github.com/mxcube/argussight"
+urls.homepage = "https://github.com/mxcube/argussight"
+urls.documentation = "https://mxcube.github.io/argussight/"
 keywords = ["MXCuBEWeb", "video streaming", "computer vision", "multistream", "process management"]
+requires-python = ">=3.10,<3.12"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
 numpy = "^1.26.0"
 opencv-python = "4.10.0.84"
 pillow = "<=10.4.0, >=9.4.0"
@@ -36,6 +36,9 @@ pre-commit = "^3.8.0"
 isort = "^5.13.2"
 mkdocs = "^1.6.1"
 mkdocs-macros-plugin = "^1.3.7"
+
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry-core"]
