@@ -560,14 +560,14 @@ files = [
 
 [[package]]
 name = "jinja2"
-version = "3.1.5"
+version = "3.1.6"
 description = "A very fast and expressive template engine."
 optional = false
 python-versions = ">=3.7"
 groups = ["main", "dev"]
 files = [
-    {file = "jinja2-3.1.5-py3-none-any.whl", hash = "sha256:aba0f4dc9ed8013c424088f68a5c226f7d6097ed89b246d7749c2ec4175c6adb"},
-    {file = "jinja2-3.1.5.tar.gz", hash = "sha256:8fefff8dc3034e27bb80d67c671eb8a9bc424c0ef4c0826edbff304cceff43bb"},
+    {file = "jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"},
+    {file = "jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d"},
 ]
 
 [package.dependencies]
@@ -854,26 +854,27 @@ test = ["mkdocs-d2-plugin", "mkdocs-include-markdown-plugin", "mkdocs-macros-tes
 
 [[package]]
 name = "mxcube-video-streamer"
-version = "1.7.0"
+version = "1.8.2"
 description = "FastAPI Based video streamer"
 optional = false
-python-versions = "<3.12,>=3.8"
+python-versions = "<3.12,>=3.10"
 groups = ["main"]
 files = [
-    {file = "mxcube_video_streamer-1.7.0-py3-none-any.whl", hash = "sha256:281d629a3e7171c6ae6045f4ed269e8ab0e2003b50bafc35bdcec761087e8aa2"},
-    {file = "mxcube_video_streamer-1.7.0.tar.gz", hash = "sha256:272d0dc033f7b2d9977baa4b7ac2236a4cf208f2324fcbe5832f05cdc140bb35"},
+    {file = "mxcube_video_streamer-1.8.2-py3-none-any.whl", hash = "sha256:356998627e4ecc74b6b764dcd4799be0d85e4d658f10810b877d9af14ac57178"},
+    {file = "mxcube_video_streamer-1.8.2.tar.gz", hash = "sha256:0de041c5f17148cec4668a7683f39f1064cd5036d6de311de23a29965466bba6"},
 ]
 
 [package.dependencies]
 fastapi = ">=0.115.6,<0.116.0"
-jinja2 = ">=3.1.5,<4.0.0"
+jinja2 = ">=3.1.6,<4.0.0"
+numpy = ">=1.26.0,<2.0"
 opencv-python = ">=4.10.0.84,<5.0.0.0"
 pillow = ">=10.4.0,<11.0.0"
 pydantic = ">=2.8.2,<2.9.0"
 pydantic-settings = ">=2.4.0"
 pytango = ">=9.3.6,<10.0.0"
 redis = ">=4.3.5,<5.0.0"
-uvicorn = ">=0.30.6,<0.31.0"
+uvicorn = ">=0.34.0,<0.35.0"
 websockets = ">=12.0,<13.0"
 
 [[package]]
@@ -1751,14 +1752,14 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "uvicorn"
-version = "0.30.6"
+version = "0.34.0"
 description = "The lightning-fast ASGI server."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "uvicorn-0.30.6-py3-none-any.whl", hash = "sha256:65fd46fe3fda5bdc1b03b94eb634923ff18cd35b2f084813ea79d1f103f711b5"},
-    {file = "uvicorn-0.30.6.tar.gz", hash = "sha256:4b15decdda1e72be08209e860a1e10e92439ad5b97cf44cc945fcbee66fc5788"},
+    {file = "uvicorn-0.34.0-py3-none-any.whl", hash = "sha256:023dc038422502fa28a09c7a30bf2b6991512da7dcdb8fd35fe57cfc154126f4"},
+    {file = "uvicorn-0.34.0.tar.gz", hash = "sha256:404051050cd7e905de2c9a7e61790943440b3416f49cb409f965d9dcd0fa73e9"},
 ]
 
 [package.dependencies]
@@ -1767,7 +1768,7 @@ h11 = ">=0.8"
 typing-extensions = {version = ">=4.0", markers = "python_version < \"3.11\""}
 
 [package.extras]
-standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "uvloop (>=0.14.0,!=0.15.0,!=0.15.1)", "watchfiles (>=0.13)", "websockets (>=10.4)"]
+standard = ["colorama (>=0.4)", "httptools (>=0.6.3)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "uvloop (>=0.14.0,!=0.15.0,!=0.15.1)", "watchfiles (>=0.13)", "websockets (>=10.4)"]
 
 [[package]]
 name = "virtualenv"
@@ -1953,4 +1954,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.12"
-content-hash = "2cdc11ebb924531abf60be9e336599bc4be09eff1c9840910d1d6ad891ad3b4a"
+content-hash = "70fd4cc52e2b25a64d693f85648641ae3ffb00d9345a4de9820fb599dd83ef27"
