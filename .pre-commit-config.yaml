@@ -1,9 +1,5 @@
 ---
 
-default_language_version:
-  # This should be set to the lowest Python version that we support.
-  python: python3.10
-
 repos:
 
   - repo: https://github.com/adrienverge/yamllint
