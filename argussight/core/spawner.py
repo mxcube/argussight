@@ -170,7 +170,7 @@ class Spawner:
                 return process
         return None
 
-    def terminate_processes(self, names: List[str]) -> None:
+    def terminate_processes(self, names: List[str], ignore_restrictions=False) -> None:
         for name in names:
             self.check_for_running_process(name)
             worker_type = self._processes[name]["type"]
@@ -206,9 +206,16 @@ class Spawner:
             if (
                 worker_type in self._restricted_classes
                 and self.check_restricted_access(worker_type)
+                and not ignore_restrictions
             ):
                 process = self.find_process_in_config_by_name(name)
                 self.start_process(process["name"], process["type"])
+
+    def terminate_all_processes(self) -> None:
+        self.terminate_processes(list(self._processes.keys()), ignore_restrictions=True)
+        self._settings_manager.shutdown()
+        self._settings_manager.join()
+        self._logger.info("terminated all processes")
 
     def wait_for_manager(
         self,
