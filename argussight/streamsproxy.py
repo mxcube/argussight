@@ -1,4 +1,5 @@
 import asyncio
+import signal
 from typing import Dict
 
 import websockets
@@ -14,6 +15,22 @@ client_queues: Dict[WebSocket, asyncio.Queue] = {}
 logger = configure_logger("StreamsProxy", "streams_proxy")
 
 
+async def shutdown(loop, signal=None):
+    logger.info(
+        f"Received exit signal {signal.name if signal else 'unknown'}, shutting down..."
+    )
+    # Cancel all active tasks
+    for path, info in active_streams.items():
+        task = info.get("task")
+        if task:
+            task.cancel()
+    # Wait for them to finish
+    await asyncio.gather(
+        *(t["task"] for t in active_streams.values()), return_exceptions=True
+    )
+    loop.stop()
+
+
 @app.post("/add-stream")
 async def add_stream(path: str, port: int, id: str) -> Dict[str, str]:
     if path in active_streams:
@@ -25,6 +42,8 @@ async def add_stream(path: str, port: int, id: str) -> Dict[str, str]:
 
     # Spawn the upstream worker
     loop = asyncio.get_running_loop()
+    for s in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(s, lambda s=s: asyncio.create_task(shutdown(loop, s)))
     task = loop.create_task(upstream_worker(path, original_ws_url))
     active_streams[path]["task"] = task
 
