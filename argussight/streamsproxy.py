@@ -19,12 +19,10 @@ async def shutdown(loop, signal=None):
     logger.info(
         f"Received exit signal {signal.name if signal else 'unknown'}, shutting down..."
     )
-    # Cancel all active tasks
     for path, info in active_streams.items():
         task = info.get("task")
         if task:
             task.cancel()
-    # Wait for them to finish
     await asyncio.gather(
         *(t["task"] for t in active_streams.values()), return_exceptions=True
     )
@@ -120,7 +118,7 @@ async def websocket_proxy(websocket: WebSocket, path: str):
 def run(port: int = 7000) -> None:
     import uvicorn
 
-    uvicorn.run(app, host="localhost", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 if __name__ == "__main__":
