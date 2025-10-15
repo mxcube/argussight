@@ -1,14 +1,15 @@
+import asyncio
 from typing import Dict
 
 import websockets
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, WebSocketException, status
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from argussight.logger import configure_logger
 
 app = FastAPI()
 
-# Active storages for available streams
-active_streams: Dict[str, Dict[str, str]] = {}
+active_streams: Dict[str, Dict[str, any]] = {}
+client_queues: Dict[WebSocket, asyncio.Queue] = {}
 
 logger = configure_logger("StreamsProxy", "streams_proxy")
 
@@ -20,7 +21,13 @@ async def add_stream(path: str, port: int, id: str) -> Dict[str, str]:
 
     # Store the original WebSocket URL and path details
     original_ws_url = f"ws://localhost:{port}/ws/{id}"
-    active_streams[path] = {"url": original_ws_url}
+    active_streams[path] = {"url": original_ws_url, "clients": set()}
+
+    # Spawn the upstream worker
+    loop = asyncio.get_running_loop()
+    task = loop.create_task(upstream_worker(path, original_ws_url))
+    active_streams[path]["task"] = task
+
     logger.info(f"Stream added at path /{path}")
     return {"message": f"Stream added at path /{path}"}
 
@@ -36,37 +43,58 @@ async def remove_stream(path: str) -> Dict[str, str]:
     return {"message": f"Stream removed at path /{path}"}
 
 
+async def upstream_worker(path: str, url: str):
+    """Keeps a single upstream connection open and broadcasts to all clients."""
+    try:
+        async with websockets.connect(url) as original_ws:
+            logger.info(f"Connected upstream {url} for {path}")
+
+            async for data in original_ws:
+                clients = active_streams[path]["clients"].copy()
+                for client in clients:
+                    q = client_queues.get(client)
+                    if q:
+                        try:
+                            q.put_nowait(data)
+                        except asyncio.QueueFull:
+                            logger.warning("Dropping frame for slow client")
+
+    except Exception as e:
+        logger.error(f"Upstream worker for {path} failed: {e}")
+    finally:
+        logger.info(f"Upstream for {path} closed")
+        for client in active_streams.get(path, {}).get("clients", []):
+            await client.close()
+        active_streams.pop(path, None)
+
+
 @app.websocket("/ws/{path}")
-async def websocket_proxy(websocket: WebSocket, path: str) -> None:
-    # Check if stream available otherwise close connection
+async def websocket_proxy(websocket: WebSocket, path: str):
     stream_data = active_streams.get(path)
     if not stream_data:
-        raise WebSocketException(
-            code=status.WS_1008_POLICY_VIOLATION, reason="Resource not available"
-        )
+        await websocket.close(code=4404, reason="Resource not available")
+        return
 
     await websocket.accept()
+    logger.info(f"Client connected to {path}")
 
-    original_ws_url = stream_data["url"]
+    q = asyncio.Queue(maxsize=5)
+    client_queues[websocket] = q
+    stream_data["clients"].add(websocket)
 
     try:
-        # Connect to the original WebSocket server
-        async with websockets.connect(original_ws_url) as original_ws:
-            logger.info(f"Connected to original WebSocket stream at {original_ws_url}")
-
-            # Relay data between original WebSocket and JSMpeg client
-            while True:
-                if active_streams.get(path) is None:
-                    websocket.close(reason="Stream was removed")
-                    break
-                binary_data = await original_ws.recv()
-                await websocket.send_bytes(binary_data)
+        while True:
+            data = await q.get()
+            if isinstance(data, str):
+                await websocket.send_text(data)
+            else:
+                await websocket.send_bytes(data)
 
     except WebSocketDisconnect:
-        logger.info("Connection with client closed")
-    except websockets.exceptions.ConnectionClosedError as e:
-        logger.warning(f"Connection to original WebSocket stream closed: {e}")
-        await remove_stream(path)
+        logger.info("Client disconnected")
+    finally:
+        stream_data["clients"].discard(websocket)
+        client_queues.pop(websocket, None)
         await websocket.close()
 
 
