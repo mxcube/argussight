@@ -1,4 +1,5 @@
 import logging
+import signal
 import time
 from concurrent import futures
 from threading import Event
@@ -235,13 +236,19 @@ def serve(collector_config):
     server.add_insecure_port("[::]:50051")
     server.start()
     logger.info("Server started on port 50051")
-    try:
-        while True:
-            time.sleep(86400)
-    except KeyboardInterrupt:
-        logger.info("Server shutting down...")
 
-        shutdown_event.set()  # Mark shutdown to prevent new requests
+    def handle_shutdown_signal(signum, frame):
+        logger.info(f"Received shutdown signal ({signum}). Initiating shutdown...")
+        shutdown_event.set()  # this prevents server from threating new requests
+
+    signal.signal(signal.SIGINT, handle_shutdown_signal)
+    signal.signal(signal.SIGTERM, handle_shutdown_signal)
+
+    try:
+        while not shutdown_event.is_set():
+            time.sleep(1)
+    finally:
+        logger.info("Server shutting down...")
 
         server.stop(grace=5)  # Allow server to finish processing current requests
 
