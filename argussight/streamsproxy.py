@@ -62,27 +62,39 @@ async def remove_stream(path: str) -> Dict[str, str]:
 
 async def upstream_worker(path: str, url: str):
     """Keeps a single upstream connection open and broadcasts to all clients."""
-    try:
-        async with websockets.connect(url) as original_ws:
-            logger.info(f"Connected upstream {url} for {path}")
+    reconnection_tries = 0
+    while True:
+        try:
+            async with websockets.connect(url) as original_ws:
+                logger.info(f"Connected upstream {url} for {path}")
 
-            async for data in original_ws:
-                clients = active_streams[path]["clients"].copy()
-                for client in clients:
-                    q = client_queues.get(client)
-                    if q:
-                        try:
-                            q.put_nowait(data)
-                        except asyncio.QueueFull:
-                            logger.warning("Dropping frame for slow client")
+                async for data in original_ws:
+                    clients = active_streams[path]["clients"].copy()
+                    for client in clients:
+                        q = client_queues.get(client)
+                        if q:
+                            try:
+                                q.put_nowait(data)
+                                reconnection_tries = 0  # Reset on successful send
+                            except asyncio.QueueFull:
+                                logger.warning("Dropping frame for slow client")
 
-    except Exception as e:
-        logger.error(f"Upstream worker for {path} failed: {e}")
-    finally:
-        logger.info(f"Upstream for {path} closed")
-        for client in active_streams.get(path, {}).get("clients", []):
-            await client.close()
-        active_streams.pop(path, None)
+        except Exception as e:
+            logger.error(f"Upstream worker for {path} failed: {e}")
+            if reconnection_tries >= 3:
+                logger.error(
+                    f"Max reconnection attempts reached for {path}, shutting down."
+                )
+                break
+            reconnection_tries += 1
+            logger.info(f"Reconnecting upstream for {path} in 2 seconds...")
+            await asyncio.sleep(2)
+            logger.info(f"Reconnecting upstream for {path}")
+
+    logger.info(f"Upstream for {path} closed")
+    for client in active_streams.get(path, {}).get("clients", []):
+        await client.close()
+    active_streams.pop(path, None)
 
 
 @app.websocket("/ws/{path}")
