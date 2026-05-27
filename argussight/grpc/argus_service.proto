@@ -11,6 +11,9 @@ service SpawnerService {
     rpc GetProcesses (GetProcessesRequest) returns (GetProcessesResponse);
     rpc ChangeSettings (ChangeSettingsRequest) returns (ChangeSettingsResponse);
     rpc AddStream (AddStreamRequest) returns (AddStreamResponse);
+    rpc RemoveStream (RemoveStreamRequest) returns (RemoveStreamResponse);
+    rpc HideStream (HideStreamRequest) returns (HideStreamResponse);
+    rpc ShowStream (ShowStreamRequest) returns (ShowStreamResponse);
 }
 
 message StartProcessesRequest {
@@ -73,6 +76,34 @@ message AddStreamRequest {
 }
 
 message AddStreamResponse {
+    string status = 1;
+    string error_message = 2;
+}
+
+message RemoveStreamRequest {
+    string name = 1;
+}
+
+message RemoveStreamResponse {
+    string status = 1;
+    string error_message = 2;
+}
+
+message HideStreamRequest {
+    string name = 1;
+    string reason_to_hide = 2;
+}
+
+message HideStreamResponse {
+    string status = 1;
+    string error_message = 2;
+}
+
+message ShowStreamRequest {
+    string name = 1;
+}
+
+message ShowStreamResponse {
     string status = 1;
     string error_message = 2;
 }

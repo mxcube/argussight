@@ -155,6 +155,14 @@ class Spawner:
     def close_all_streams(self) -> None:
         self._proxy_command_queue.put({"action": "shutdown_streams"})
 
+    def hide_stream(self, name, reason_to_hide) -> None:
+        self._proxy_command_queue.put(
+            {"action": "hide_stream", "path": name, "reason_to_hide": reason_to_hide}
+        )
+
+    def show_stream(self, name) -> None:
+        self._proxy_command_queue.put({"action": "show_stream", "path": name})
+
     def start_process(self, name: str, type: str) -> None:
         if name in self._processes:
             raise ProcessError(

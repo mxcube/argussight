@@ -26,7 +26,12 @@ async def add_stream(path: str, port: int, id: str) -> Dict[str, str]:
 
     # Store the original WebSocket URL and path details
     original_ws_url = f"ws://localhost:{port}/ws/{id}"
-    active_streams[path] = {"url": original_ws_url, "clients": set()}
+    active_streams[path] = {
+        "url": original_ws_url,
+        "clients": set(),
+        "hidden": False,
+        "reason_to_hide": "",
+    }
 
     # Spawn the upstream worker
     task = asyncio.create_task(upstream_worker(path, original_ws_url))
@@ -61,6 +66,28 @@ async def remove_stream(path: str) -> Dict[str, str]:
     return {"message": f"Stream removed at path /{path}"}
 
 
+async def hide_stream(path: str, reason_to_hide: str) -> Dict[str, str]:
+    stream = active_streams.get(path)
+    if not stream:
+        return {"message": f"No stream exists at path /{path}"}
+
+    stream["hidden"] = True
+    stream["reason_to_hide"] = reason_to_hide
+    logger.info(f"Stream hidden at path /{path}")
+    return {"message": f"Stream hidden at path /{path}"}
+
+
+async def show_stream(path: str) -> Dict[str, str]:
+    stream = active_streams.get(path)
+    if not stream:
+        return {"message": f"No stream exists at path /{path}"}
+
+    stream["hidden"] = False
+    stream["reason_to_hide"] = ""
+    logger.info(f"Stream shown at path /{path}")
+    return {"message": f"Stream shown at path /{path}"}
+
+
 async def command_consumer(command_queue: multiprocessing.Queue):
     while True:
         try:
@@ -77,21 +104,26 @@ async def command_consumer(command_queue: multiprocessing.Queue):
             logger.warning("Received command without action")
             continue
 
-        if command["action"] == "add_stream":
-            await add_stream(command["path"], command["port"], command["id"])
-        elif command["action"] == "remove_stream":
-            await remove_stream(command["path"])
-        elif command["action"] == "shutdown_streams":
-            await shutdown_streams()
-        elif command["action"] == "shutdown_server":
-            logger.info(
-                "Received shutdown command from spawner, initiating server shutdown..."
-            )
-            shutdown_event.set()
-            await shutdown_streams()
-            return
-        else:
-            logger.warning(f"Unknown command action: {command['action']}")
+        match command["action"]:
+            case "add_stream":
+                await add_stream(command["path"], command["port"], command["id"])
+            case "remove_stream":
+                await remove_stream(command["path"])
+            case "shutdown_streams":
+                await shutdown_streams()
+            case "hide_stream":
+                await hide_stream(command["path"], command["reason_to_hide"])
+            case "show_stream":
+                await show_stream(command["path"])
+            case "shutdown_server":
+                logger.info(
+                    "Received shutdown command from spawner, initiating server shutdown..."
+                )
+                shutdown_event.set()
+                await shutdown_streams()
+                return
+            case _:
+                logger.warning(f"Unknown command action: {command['action']}")
 
 
 async def upstream_worker(path: str, url: str):
@@ -112,7 +144,10 @@ async def upstream_worker(path: str, url: str):
                         q = client_queues.get(client)
                         if q:
                             try:
-                                q.put_nowait(data)
+                                if active_streams[path]["hidden"]:
+                                    q.put_nowait(active_streams[path]["reason_to_hide"])
+                                else:
+                                    q.put_nowait(data)
                                 reconnection_tries = 0  # Reset on successful send
                             except asyncio.QueueFull:
                                 logger.warning("Dropping frame for slow client")

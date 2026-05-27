@@ -4,7 +4,7 @@ import grpc
 
 import argussight.grpc.argus_service_pb2 as argus__service__pb2
 
-GRPC_GENERATED_VERSION = "1.67.1"
+GRPC_GENERATED_VERSION = "1.70.0"
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -72,6 +72,24 @@ class SpawnerServiceStub(object):
             response_deserializer=argus__service__pb2.AddStreamResponse.FromString,
             _registered_method=True,
         )
+        self.RemoveStream = channel.unary_unary(
+            "/argussight.SpawnerService/RemoveStream",
+            request_serializer=argus__service__pb2.RemoveStreamRequest.SerializeToString,
+            response_deserializer=argus__service__pb2.RemoveStreamResponse.FromString,
+            _registered_method=True,
+        )
+        self.HideStream = channel.unary_unary(
+            "/argussight.SpawnerService/HideStream",
+            request_serializer=argus__service__pb2.HideStreamRequest.SerializeToString,
+            response_deserializer=argus__service__pb2.HideStreamResponse.FromString,
+            _registered_method=True,
+        )
+        self.ShowStream = channel.unary_unary(
+            "/argussight.SpawnerService/ShowStream",
+            request_serializer=argus__service__pb2.ShowStreamRequest.SerializeToString,
+            response_deserializer=argus__service__pb2.ShowStreamResponse.FromString,
+            _registered_method=True,
+        )
 
 
 class SpawnerServiceServicer(object):
@@ -113,6 +131,24 @@ class SpawnerServiceServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def RemoveStream(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def HideStream(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def ShowStream(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
 
 def add_SpawnerServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -145,6 +181,21 @@ def add_SpawnerServiceServicer_to_server(servicer, server):
             servicer.AddStream,
             request_deserializer=argus__service__pb2.AddStreamRequest.FromString,
             response_serializer=argus__service__pb2.AddStreamResponse.SerializeToString,
+        ),
+        "RemoveStream": grpc.unary_unary_rpc_method_handler(
+            servicer.RemoveStream,
+            request_deserializer=argus__service__pb2.RemoveStreamRequest.FromString,
+            response_serializer=argus__service__pb2.RemoveStreamResponse.SerializeToString,
+        ),
+        "HideStream": grpc.unary_unary_rpc_method_handler(
+            servicer.HideStream,
+            request_deserializer=argus__service__pb2.HideStreamRequest.FromString,
+            response_serializer=argus__service__pb2.HideStreamResponse.SerializeToString,
+        ),
+        "ShowStream": grpc.unary_unary_rpc_method_handler(
+            servicer.ShowStream,
+            request_deserializer=argus__service__pb2.ShowStreamRequest.FromString,
+            response_serializer=argus__service__pb2.ShowStreamResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -329,6 +380,96 @@ class SpawnerService(object):
             "/argussight.SpawnerService/AddStream",
             argus__service__pb2.AddStreamRequest.SerializeToString,
             argus__service__pb2.AddStreamResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def RemoveStream(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/argussight.SpawnerService/RemoveStream",
+            argus__service__pb2.RemoveStreamRequest.SerializeToString,
+            argus__service__pb2.RemoveStreamResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def HideStream(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/argussight.SpawnerService/HideStream",
+            argus__service__pb2.HideStreamRequest.SerializeToString,
+            argus__service__pb2.HideStreamResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def ShowStream(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/argussight.SpawnerService/ShowStream",
+            argus__service__pb2.ShowStreamRequest.SerializeToString,
+            argus__service__pb2.ShowStreamResponse.FromString,
             options,
             channel_credentials,
             insecure,

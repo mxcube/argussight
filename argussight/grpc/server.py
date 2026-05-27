@@ -221,6 +221,69 @@ class SpawnerService(pb2_grpc.SpawnerServiceServicer):
                 status="failure", error_message=f"Couldn't add stream {request.name}"
             )
 
+    @check_shutdown_event
+    def RemoveStream(self, request, context):
+        """
+        Removes a stream based on the provided request.
+
+        Args:
+            request (pb2.RemoveStreamRequest): gRPC request containing stream name.
+            context: gRPC context object.
+
+        Returns:
+            pb2.RemoveStreamResponse: gRPC response indicating success or failure.
+        """
+        try:
+            self.spawner.remove_stream(request.name)
+            return pb2.RemoveStreamResponse(status="success")
+        except Exception as e:
+            logger.exception(f"Unexpected error while removing stream: {str(e)}")
+            return pb2.RemoveStreamResponse(
+                status="failure", error_message=f"Couldn't remove stream {request.name}"
+            )
+
+    @check_shutdown_event
+    def HideStream(self, request, context):
+        """
+        Hides a stream based on the provided request.
+
+        Args:
+            request (pb2.HideStreamRequest): gRPC request containing stream name and reason to hide.
+            context: gRPC context object.
+
+        Returns:
+            pb2.HideStreamResponse: gRPC response indicating success or failure.
+        """
+        try:
+            self.spawner.hide_stream(request.name, request.reason_to_hide)
+            return pb2.HideStreamResponse(status="success")
+        except Exception as e:
+            logger.exception(f"Unexpected error while hiding stream: {str(e)}")
+            return pb2.HideStreamResponse(
+                status="failure", error_message=f"Couldn't hide stream {request.name}"
+            )
+
+    @check_shutdown_event
+    def ShowStream(self, request, context):
+        """
+        Shows a stream based on the provided request.
+
+        Args:
+            request (pb2.ShowStreamRequest): gRPC request containing stream name.
+            context: gRPC context object.
+
+        Returns:
+            pb2.ShowStreamResponse: gRPC response indicating success or failure.
+        """
+        try:
+            self.spawner.show_stream(request.name)
+            return pb2.ShowStreamResponse(status="success")
+        except Exception as e:
+            logger.exception(f"Unexpected error while showing stream: {str(e)}")
+            return pb2.ShowStreamResponse(
+                status="failure", error_message=f"Couldn't show stream {request.name}"
+            )
+
 
 def serve(collector_config):
     """
