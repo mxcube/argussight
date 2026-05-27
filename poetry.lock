@@ -409,14 +409,14 @@ files = [
 
 [[package]]
 name = "flask"
-version = "3.1.2"
+version = "3.1.3"
 description = "A simple framework for building complex web applications."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "flask-3.1.2-py3-none-any.whl", hash = "sha256:ca1d8112ec8a6158cc29ea4858963350011b5c846a414cdb7a954aa9e967d03c"},
-    {file = "flask-3.1.2.tar.gz", hash = "sha256:bf656c15c80190ed628ad08cdfd3aaa35beb087855e2f494910aa3774cc4fd87"},
+    {file = "flask-3.1.3-py3-none-any.whl", hash = "sha256:f4bcbefc124291925f1a26446da31a5178f9483862233b23c0c96a20701f670c"},
+    {file = "flask-3.1.3.tar.gz", hash = "sha256:0ef0e52b8a9cd932855379197dd8f94047b359ca0a78695144304cb45f87c9eb"},
 ]
 
 [package.dependencies]
@@ -728,18 +728,18 @@ license = ["ukkonen"]
 
 [[package]]
 name = "idna"
-version = "3.11"
+version = "3.16"
 description = "Internationalized Domain Names in Applications (IDNA)"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "idna-3.11-py3-none-any.whl", hash = "sha256:771a87f49d9defaf64091e6e6fe9c18d4833f140bd19464795bc32d966ca37ea"},
-    {file = "idna-3.11.tar.gz", hash = "sha256:795dafcc9c04ed0c1fb032c2aa73654d8e8c5023a7df64a53f39190ada629902"},
+    {file = "idna-3.16-py3-none-any.whl", hash = "sha256:cc246e3a3f89580c3a951b5ad298ca4638078b2cdd4f115654332b5c26daded5"},
+    {file = "idna-3.16.tar.gz", hash = "sha256:d7a6da03db833450fca25d2358ac9ff06cd624577a4aea3a596d5c0f77b8e03d"},
 ]
 
 [package.extras]
-all = ["flake8 (>=7.1.1)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2)"]
+all = ["mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2)"]
 
 [[package]]
 name = "isort"
@@ -1129,14 +1129,14 @@ test = ["mkdocs-d2-plugin", "mkdocs-include-markdown-plugin", "mkdocs-macros-tes
 
 [[package]]
 name = "mxcube-video-streamer"
-version = "1.8.5"
+version = "1.9.0"
 description = "FastAPI Based video streamer"
 optional = false
 python-versions = "<3.12,>=3.10"
 groups = ["main"]
 files = [
-    {file = "mxcube_video_streamer-1.8.5-py3-none-any.whl", hash = "sha256:0948d5aee5b72be8d37e8d2b45762176c9367bfac454c7f59c5594346484e936"},
-    {file = "mxcube_video_streamer-1.8.5.tar.gz", hash = "sha256:05e13b003b8ffe8a9d281c12e2a7cb72b8aeb97df804fed09c8909cafb4cce77"},
+    {file = "mxcube_video_streamer-1.9.0-py3-none-any.whl", hash = "sha256:b9dac4e1db16648cb429619de0a95e62673a86f33bb4736955fa9f17d87c6240"},
+    {file = "mxcube_video_streamer-1.9.0.tar.gz", hash = "sha256:df474fd8b88b8b1abc4f65a669704dd0875450cbdb9523ce5029eb56a6cb96b0"},
 ]
 
 [package.dependencies]
@@ -1153,6 +1153,7 @@ typing-extensions = ">=4.14.1,<5.0.0"
 uvicorn = {version = ">=0.34.0,<0.35.0", extras = ["standard"]}
 
 [package.extras]
+epics = ["p4p (>=4.2.2,<5.0.0)"]
 tango = ["pytango (>=9.3.6,<10.0.0)"]
 
 [[package]]
@@ -2160,14 +2161,14 @@ typing-extensions = ">=4.12.0"
 
 [[package]]
 name = "urllib3"
-version = "2.6.3"
+version = "2.7.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4"},
-    {file = "urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed"},
+    {file = "urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897"},
+    {file = "urllib3-2.7.0.tar.gz", hash = "sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c"},
 ]
 
 [package.extras]
@@ -2561,4 +2562,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.12"
-content-hash = "1a49678ba5795ecd9d66fa5d604752d695d3e65ccf591279256115257c4a4f48"
+content-hash = "3d42d88e80abf93461054886551a9cd6b1a5409cf77fb49f0e17dbb51fae52e6"
