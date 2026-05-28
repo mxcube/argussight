@@ -250,13 +250,12 @@ def serve(collector_config):
     finally:
         logger.info("Server shutting down...")
 
-        server.stop(grace=5)  # Allow server to finish processing current requests
+        server.stop(grace=10)  # Allow server to finish processing current requests
 
-        # Terminate all running processes
         try:
-            spawner_service.spawner.terminate_all_processes()
-            logger.info("All processes terminated successfully.")
+            spawner_service.spawner.cleanup()
+            logger.info("Spawner cleanup completed successfully.")
         except Exception as e:
-            logger.error(f"Error terminating processes: {str(e)}")
+            logger.error(f"Error during spawner cleanup: {str(e)}")
 
         logger.info("Server stopped.")

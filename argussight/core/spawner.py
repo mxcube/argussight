@@ -8,7 +8,6 @@ from logging import Logger
 from typing import Any, Dict, List, Tuple
 
 import psutil
-import requests
 import yaml
 
 import argussight.streamsproxy as StreamsProxy
@@ -34,13 +33,39 @@ class Spawner:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.load_config(os.path.join(current_dir, "configurations/config.yaml"))
 
+        self._starts_stream_proxy()
+
+    def cleanup(self):
+        try:
+            self._logger.info("Terminating all processes...")
+            self.terminate_all_processes()
+            self._logger.info("All processes terminated successfully.")
+        except Exception as e:
+            self._logger.error(f"Error terminating processes: {str(e)}")
+
+        self._logger.info("Terminating streams layer process...")
+        self._proxy_command_queue.put({"action": "shutdown_server"})
+        self.streams_layer_process.join(timeout=10)
+
+        if self.streams_layer_process.is_alive():
+            self._logger.warning(
+                "Streams layer process did not shut down gracefully, terminating forcefully..."
+            )
+            self.streams_layer_process.terminate()
+            self.streams_layer_process.join(timeout=10)
+
+    def _starts_stream_proxy(self):
+        self._proxy_command_queue = multiprocessing.Queue()
+        self.streams_layer_process = multiprocessing.Process(
+            target=StreamsProxy.run,
+            args=(self._proxy_command_queue, self.config["streams_layer_port"]),
+        )
+
+        self.streams_layer_process.start()
+
         self._logger.info(
             f"running stream_layer on port {self.config['streams_layer_port']}"
         )
-        streams_layer_process = multiprocessing.Process(
-            target=StreamsProxy.run, args=(self.config["streams_layer_port"],)
-        )
-        streams_layer_process.start()
 
     def load_config(self, path_config_file: str) -> None:
         with open(path_config_file, "r") as f:
@@ -118,15 +143,17 @@ class Spawner:
         return False
 
     def add_stream(self, name, port, stream_id) -> None:
-        requests.post(
-            f"http://localhost:{str(self.config['streams_layer_port'])}/add-stream",
-            params={
-                "path": name,
-                "port": port,
-                "id": stream_id,
-            },
+        self._proxy_command_queue.put(
+            {"action": "add_stream", "path": name, "port": port, "id": stream_id}
         )
         self._streams.add(name)
+
+    def remove_stream(self, name) -> None:
+        self._proxy_command_queue.put({"action": "remove_stream", "path": name})
+        self._streams.discard(name)
+
+    def close_all_streams(self) -> None:
+        self._proxy_command_queue.put({"action": "shutdown_streams"})
 
     def start_process(self, name: str, type: str) -> None:
         if name in self._processes:
@@ -196,11 +223,7 @@ class Spawner:
             del self._processes[name]
 
             if worker_type in self._streamer_types:
-                requests.post(
-                    f"http://localhost:{str(self.config['streams_layer_port'])}/remove-stream",
-                    params={"path": name},
-                )
-                self._streams.discard(name)
+                self.remove_stream(name)
 
             self._logger.info(f"terminated {name} of type {worker_type}")
             if (
