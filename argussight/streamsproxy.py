@@ -1,7 +1,11 @@
 import asyncio
+import contextlib
+import multiprocessing
+import queue
 import signal
 from typing import Dict
 
+import uvicorn
 import websockets
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -13,23 +17,9 @@ active_streams: Dict[str, Dict[str, any]] = {}
 client_queues: Dict[WebSocket, asyncio.Queue] = {}
 
 logger = configure_logger("StreamsProxy", "streams_proxy")
+shutdown_event = asyncio.Event()
 
 
-async def shutdown(loop, signal=None):
-    logger.info(
-        f"Received exit signal {signal.name if signal else 'unknown'}, shutting down..."
-    )
-    for path, info in active_streams.items():
-        task = info.get("task")
-        if task:
-            task.cancel()
-    await asyncio.gather(
-        *(t["task"] for t in active_streams.values()), return_exceptions=True
-    )
-    loop.stop()
-
-
-@app.post("/add-stream")
 async def add_stream(path: str, port: int, id: str) -> Dict[str, str]:
     if path in active_streams:
         return {"message": f"Stream already exists at path /{path}"}
@@ -39,25 +29,69 @@ async def add_stream(path: str, port: int, id: str) -> Dict[str, str]:
     active_streams[path] = {"url": original_ws_url, "clients": set()}
 
     # Spawn the upstream worker
-    loop = asyncio.get_running_loop()
-    for s in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(s, lambda s=s: asyncio.create_task(shutdown(loop, s)))
-    task = loop.create_task(upstream_worker(path, original_ws_url))
+    task = asyncio.create_task(upstream_worker(path, original_ws_url))
     active_streams[path]["task"] = task
 
     logger.info(f"Stream added at path /{path}")
     return {"message": f"Stream added at path /{path}"}
 
 
-@app.post("/remove-stream")
 async def remove_stream(path: str) -> Dict[str, str]:
-    if path not in active_streams:
-        return {"message": "Stream not found"}
+    stream = active_streams.pop(path, None)
 
-    del active_streams[path]
-    logger.info(f"Stream removed at path /{path}")
+    if stream is None:
+        return {"message": f"No stream exists at path /{path}"}
+
+    task = stream.get("task", None)
+    logger.info(
+        f"Removing stream at path /{path} with {len(stream.get('clients', []))} active clients"
+    )
+
+    # First disconnect clients
+    clients = stream.get("clients", set())
+    for client in clients:
+        client_queues.pop(client, None)
+        await client.close(code=1000, reason="Stream removed by server")
+
+    if task:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
 
     return {"message": f"Stream removed at path /{path}"}
+
+
+async def command_consumer(command_queue: multiprocessing.Queue):
+    while True:
+        try:
+            # Use asyncio.to_thread to call the blocking get method of the multiprocessing.Queue
+            # We use a timeout to periodically check for cancellation and avoid blocking indefinitely
+            command = await asyncio.to_thread(command_queue.get, timeout=1)
+        except queue.Empty:
+            if shutdown_event.is_set():
+                logger.info("Server shutdown initiated, stopping command consumer...")
+                break
+            continue
+
+        if not command["action"]:
+            logger.warning("Received command without action")
+            continue
+
+        if command["action"] == "add_stream":
+            await add_stream(command["path"], command["port"], command["id"])
+        elif command["action"] == "remove_stream":
+            await remove_stream(command["path"])
+        elif command["action"] == "shutdown_streams":
+            await shutdown_streams()
+        elif command["action"] == "shutdown_server":
+            logger.info(
+                "Received shutdown command from spawner, initiating server shutdown..."
+            )
+            shutdown_event.set()
+            await shutdown_streams()
+            return
+        else:
+            logger.warning(f"Unknown command action: {command['action']}")
 
 
 async def upstream_worker(path: str, url: str):
@@ -67,7 +101,11 @@ async def upstream_worker(path: str, url: str):
         try:
             async with websockets.connect(url) as original_ws:
                 logger.info(f"Connected upstream {url} for {path}")
-
+                if shutdown_event.is_set():
+                    logger.info(
+                        f"Server shutdown initiated, stopping upstream worker for {path}..."
+                    )
+                    break
                 async for data in original_ws:
                     clients = active_streams[path]["clients"].copy()
                     for client in clients:
@@ -78,23 +116,27 @@ async def upstream_worker(path: str, url: str):
                                 reconnection_tries = 0  # Reset on successful send
                             except asyncio.QueueFull:
                                 logger.warning("Dropping frame for slow client")
-
+        except asyncio.CancelledError:
+            logger.info(f"Upstream worker for {path} cancelled")
+            break
         except Exception as e:
+            if shutdown_event.is_set():
+                logger.info(
+                    f"Server shutdown initiated, stopping upstream worker for {path}..."
+                )
+                break
             logger.error(f"Upstream worker for {path} failed: {e}")
             if reconnection_tries >= 3:
                 logger.error(
                     f"Max reconnection attempts reached for {path}, shutting down."
                 )
+                logger.info(f"Removing stream at path /{path} due to upstream failure")
+                await remove_stream(path)
                 break
             reconnection_tries += 1
             logger.info(f"Reconnecting upstream for {path} in 2 seconds...")
             await asyncio.sleep(2)
             logger.info(f"Reconnecting upstream for {path}")
-
-    logger.info(f"Upstream for {path} closed")
-    for client in active_streams.get(path, {}).get("clients", []):
-        await client.close()
-    active_streams.pop(path, None)
 
 
 @app.websocket("/ws/{path}")
@@ -113,11 +155,19 @@ async def websocket_proxy(websocket: WebSocket, path: str):
 
     try:
         while True:
-            data = await q.get()
-            if isinstance(data, str):
-                await websocket.send_text(data)
-            else:
-                await websocket.send_bytes(data)
+            try:
+                data = await asyncio.wait_for(q.get(), timeout=1.0)
+                if isinstance(data, str):
+                    await websocket.send_text(data)
+                else:
+                    await websocket.send_bytes(data)
+            except asyncio.TimeoutError:
+                if shutdown_event.is_set():
+                    logger.info(
+                        "Server shutdown initiated, closing client connection..."
+                    )
+                    break
+                continue
 
     except WebSocketDisconnect:
         logger.info("Client disconnected")
@@ -127,10 +177,51 @@ async def websocket_proxy(websocket: WebSocket, path: str):
         await websocket.close()
 
 
-def run(port: int = 7000) -> None:
-    import uvicorn
+async def shutdown_streams() -> Dict[str, str]:
+    paths = list(active_streams.keys())
+    try:
+        logger.info(f"Shutting down all streams: {paths}")
+        for path in paths:
+            await remove_stream(path)
+    except Exception as e:
+        logger.error(f"Error shutting down streams: {str(e)}")
+        return {"message": "Error shutting down streams"}
+    return {"message": "All streams shutdown"}
 
-    uvicorn.run(app, host="0.0.0.0", port=port)
+
+def run(command_queue: multiprocessing.Queue, port: int = 7000) -> None:
+    async def run_server(stop_event: asyncio.Event):
+        config = uvicorn.Config(app, host="0.0.0.0", port=port)
+        server = uvicorn.Server(config)
+
+        @app.on_event("startup")
+        async def startup():
+            app.state.command_task = asyncio.create_task(
+                command_consumer(command_queue)
+            )
+
+        async def stop_when_event_is_set():
+            await stop_event.wait()
+            server.should_exit = True
+
+        watcher_task = asyncio.create_task(stop_when_event_is_set())
+
+        try:
+            await server.serve()
+        finally:
+            watcher_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await watcher_task
+
+    async def main():
+        loop = asyncio.get_running_loop()
+
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(sig, shutdown_event.set)
+
+        await run_server(shutdown_event)
+
+    asyncio.run(main())
 
 
 if __name__ == "__main__":
