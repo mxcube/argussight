@@ -12,6 +12,7 @@ class RedisConfiguration(BaseModel):
 
 
 class CollectorConfiguration(BaseModel):
+    config_path: str
     redis: RedisConfiguration
 
 

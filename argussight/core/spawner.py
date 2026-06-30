@@ -11,6 +11,7 @@ import psutil
 import yaml
 
 import argussight.streamsproxy as StreamsProxy
+from argussight.core.config import CollectorConfiguration
 from argussight.core.helper_functions import find_close_key, find_free_port
 from argussight.core.manager import Manager
 from argussight.core.video_processes.streamer.streamer import Streamer
@@ -19,7 +20,7 @@ from argussight.logger import configure_logger
 
 
 class Spawner:
-    def __init__(self, collector_config) -> None:
+    def __init__(self, collector_config: CollectorConfiguration) -> None:
         self._processes = {}
         self._worker_classes = {}
         self._managers_dict = {}
@@ -30,8 +31,7 @@ class Spawner:
         self._streams = set([])
         self._logger = configure_logger("Spawner", "Spawner")
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.load_config(os.path.join(current_dir, "configurations/config.yaml"))
+        self.load_config(os.path.join(collector_config.config_path, "config.yaml"))
 
         self._starts_stream_proxy()
 

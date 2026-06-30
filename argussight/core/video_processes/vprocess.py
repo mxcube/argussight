@@ -17,10 +17,7 @@ import redis
 import yaml
 from PIL import Image
 
-CONFIG_BASE_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "../configurations/processes"
-)
-CONFIGS_EXTENSION = ".yaml"
+from argussight.core.config import CollectorConfiguration
 
 
 class ProcessError(Exception):
@@ -37,7 +34,10 @@ class FrameFormat(Enum):
 
 class Vprocess:
     def __init__(
-        self, collector_config, exposed_parameters: Dict[str, Any], logger: Logger
+        self,
+        collector_config: CollectorConfiguration,
+        exposed_parameters: Dict[str, Any],
+        logger: Logger,
     ) -> None:
         self._current_frame_number = -1
         self._current_frame = None
@@ -63,7 +63,7 @@ class Vprocess:
             host=collector_config.redis.host, port=collector_config.redis.port
         )
         self._channel = collector_config.redis.channel
-        self._config = self.load_config_from_file()
+        self._config = self.load_config_from_file(collector_config.config_path)
         self.exposed_parameters = exposed_parameters
         self._parameters = self._get_all_parameters()
 
@@ -72,13 +72,13 @@ class Vprocess:
         merged["parameters"].update(new_dict["parameters"])
         return merged
 
-    def load_config_from_file(self) -> Dict:
+    def load_config_from_file(self, base_config_path: str) -> Dict:
         class_hierarchy = self.__class__.mro()[:-1]
         final_config = {"parameters": {}}
         for klass in reversed(class_hierarchy):
             file_name = os.path.splitext(self.get_class_file(klass))[0]
             config_path = self.__class__.find_config_file(
-                CONFIG_BASE_PATH, file_name + CONFIGS_EXTENSION
+                os.path.join(base_config_path, "processes"), file_name + ".yaml"
             )
 
             if not config_path:
