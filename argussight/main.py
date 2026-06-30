@@ -47,11 +47,12 @@ def run() -> None:
 
     config = get_config_from_dict(
         {
+            "config_path": args.config_file_path,
             "redis": {
                 "host": args.host,
                 "port": args.port,
                 "channel": args.channel,
-            }
+            },
         }
     )
 
