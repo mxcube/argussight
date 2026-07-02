@@ -1,6 +1,6 @@
 [project]
 name = "argussight"
-version = "0.3.0"
+version = "0.3.1"
 description = "An addition to MXCuBEWeb enabling simultaneous video streaming and distributed computer vision tasks."
 authors = [{name = "Yan Walesch", email = "yan.walesch@esrf.fr"}]
 license = "MIT"
