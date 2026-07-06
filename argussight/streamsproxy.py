@@ -1,8 +1,10 @@
 import asyncio
 import contextlib
 import multiprocessing
+import os
 import queue
 import signal
+from logging import Logger
 from typing import Dict
 
 import uvicorn
@@ -16,8 +18,8 @@ app = FastAPI()
 active_streams: Dict[str, Dict[str, any]] = {}
 client_queues: Dict[WebSocket, asyncio.Queue] = {}
 
-logger = configure_logger("StreamsProxy", "streams_proxy")
 shutdown_event = asyncio.Event()
+logger: Logger = Logger("StreamsProxy")  # Placeholder, will be configured in run()
 
 
 async def add_stream(path: str, port: int, id: str) -> Dict[str, str]:
@@ -224,9 +226,37 @@ async def shutdown_streams() -> Dict[str, str]:
     return {"message": "All streams shutdown"}
 
 
-def run(command_queue: multiprocessing.Queue, port: int = 7000) -> None:
+def run(
+    command_queue: multiprocessing.Queue, port: int = 7000, log_dir: str = ""
+) -> None:
+    global logger
+    logger = configure_logger("StreamsProxy", "StreamsProxy", log_dir)
+    configure_logger(
+        "uvicorn",
+        "Uvicorn",
+        os.path.join(log_dir, "Uvicorn"),
+        propagate=False,
+        add_to_shared=False,
+    )
+    configure_logger(
+        "uvicorn.error",
+        "UvicornError",
+        os.path.join(log_dir, "Uvicorn"),
+        propagate=False,
+        add_to_shared=False,
+    )
+    configure_logger(
+        "uvicorn.access",
+        "UvicornAccess",
+        os.path.join(log_dir, "Uvicorn"),
+        propagate=False,
+        add_to_shared=False,
+    )
+
     async def run_server(stop_event: asyncio.Event):
-        config = uvicorn.Config(app, host="0.0.0.0", port=port)
+        config = uvicorn.Config(
+            app, host="0.0.0.0", port=port, log_config=None, access_log=True
+        )
         server = uvicorn.Server(config)
 
         @app.on_event("startup")
