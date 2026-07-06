@@ -29,9 +29,9 @@ class Spawner:
         self.collector_config = collector_config
         self._settings_manager = multiprocessing.Manager()
         self._streams = set([])
-        self._logger = configure_logger("Spawner", "Spawner")
 
         self.load_config(os.path.join(collector_config.config_path, "config.yaml"))
+        self._logger = configure_logger("Spawner", "Spawner", self.config["log_dir"])
 
         self._starts_stream_proxy()
 
@@ -58,7 +58,11 @@ class Spawner:
         self._proxy_command_queue = multiprocessing.Queue()
         self.streams_layer_process = multiprocessing.Process(
             target=StreamsProxy.run,
-            args=(self._proxy_command_queue, self.config["streams_layer_port"]),
+            args=(
+                self._proxy_command_queue,
+                self.config["streams_layer_port"],
+                self.config["log_dir"],
+            ),
         )
 
         self.streams_layer_process.start()
@@ -176,7 +180,7 @@ class Spawner:
 
         free_port = find_free_port(self.config["streams_starting_port"])
         settings = self._settings_manager.dict()
-        logger = configure_logger(name, type)
+        logger = configure_logger(name, type, self.config["log_dir"])
         worker_instance = self.create_worker(type, free_port, settings, logger)
         command_queue = multiprocessing.Queue()
         response_queue = multiprocessing.Queue()
