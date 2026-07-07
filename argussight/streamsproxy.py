@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import logging
 import multiprocessing
 import os
 import queue
@@ -244,6 +245,7 @@ def run(
         os.path.join(log_dir, "Uvicorn"),
         propagate=False,
         add_to_shared=False,
+        file_level=logging.INFO,
     )
     configure_logger(
         "uvicorn.access",
