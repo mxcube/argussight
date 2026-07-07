@@ -27,6 +27,7 @@ def configure_logger(
     log_directory: str,
     propagate: bool = True,
     add_to_shared: bool = True,
+    file_level: int = logging.DEBUG,
 ) -> logging.Logger:
     """Configures/Creates a single logger."""
     logger = logging.getLogger(name)
@@ -47,6 +48,7 @@ def configure_logger(
     )
     shared_file_handler.setFormatter(logging.Formatter(LOG_FORMAT_SHARED))
     shared_file_handler.addFilter(type_filter)
+    shared_file_handler.setLevel(file_level)
 
     if add_to_shared:
         logger.addHandler(shared_file_handler)
@@ -54,6 +56,7 @@ def configure_logger(
     specific_log_file = os.path.join(log_directory, f"{camel_type}.log")
     type_file_handler = logging.FileHandler(specific_log_file)
     type_file_handler.setFormatter(logging.Formatter(LOG_FORMAT_SPECIFIC))
+    type_file_handler.setLevel(file_level)
 
     # Console handler
     console_handler = colorlog.StreamHandler()
@@ -71,7 +74,6 @@ def configure_logger(
     console_handler.addFilter(type_filter)
 
     # Attach handlers
-    logger.addHandler(shared_file_handler)
     logger.addHandler(type_file_handler)
     logger.addHandler(console_handler)
 
