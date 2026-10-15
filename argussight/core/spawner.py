@@ -1,9 +1,12 @@
+import contextlib
 import importlib
 import inspect
 import multiprocessing
 import os
 import queue
+import subprocess
 import threading
+import uuid
 from logging import Logger
 from typing import Any, Dict, List, Tuple
 
@@ -11,8 +14,12 @@ import psutil
 import yaml
 
 import argussight.streamsproxy as StreamsProxy
-from argussight.core.config import CollectorConfiguration
-from argussight.core.helper_functions import find_close_key, find_free_port
+from argussight.core.config import CollectorConfiguration, StreamConfiguration
+from argussight.core.helper_functions import (
+    find_close_key,
+    find_free_port,
+    stop_with_parent,
+)
 from argussight.core.manager import Manager
 from argussight.core.video_processes.streamer.streamer import Streamer
 from argussight.core.video_processes.vprocess import ProcessError, Vprocess
@@ -29,11 +36,17 @@ class Spawner:
         self.collector_config = collector_config
         self._settings_manager = multiprocessing.Manager()
         self._streams = set([])
+        self._stream_processes: Dict[str, subprocess.Popen] = {}
+        # ports handed out to streams, which might not be listening yet
+        self._reserved_ports: Dict[str, int] = {}
 
         self.load_config(os.path.join(collector_config.config_path, "config.yaml"))
         self._logger = configure_logger("Spawner", "Spawner", self.config["log_dir"])
 
+        # the streams layer has to run before any stream can be added to it
         self._starts_stream_proxy()
+        self.start_configured_processes()
+        self.start_configured_streams()
 
     def cleanup(self):
         try:
@@ -42,6 +55,13 @@ class Spawner:
             self._logger.info("All processes terminated successfully.")
         except Exception as e:
             self._logger.error(f"Error terminating processes: {str(e)}")
+
+        try:
+            self._logger.info("Stopping all streams...")
+            self.stop_streams(list(self._stream_processes.keys()))
+            self._logger.info("All streams stopped successfully.")
+        except Exception as e:
+            self._logger.error(f"Error stopping streams: {str(e)}")
 
         self._logger.info("Terminating streams layer process...")
         self._proxy_command_queue.put({"action": "shutdown_server"})
@@ -76,8 +96,99 @@ class Spawner:
             self.config = yaml.safe_load(f)
         self.load_worker_classes()
 
+        # validate streams before anything is started
+        self._configured_streams = [
+            StreamConfiguration(**stream) for stream in self.config.get("streams") or []
+        ]
+        stream_names = [stream.name for stream in self._configured_streams]
+        if len(stream_names) != len(set(stream_names)):
+            raise ProcessError(f"Stream names must be unique, got {stream_names}")
+
+    def start_configured_processes(self) -> None:
         for process in self.config["processes"]:
             self.start_process(process["name"], process["type"])
+
+    def start_configured_streams(self) -> None:
+        for stream in self._configured_streams:
+            self.start_stream(stream)
+
+    def start_stream(self, stream: StreamConfiguration) -> None:
+        """Start a video-streamer for a camera and add it to the streams layer"""
+        if stream.name in self._streams or stream.name in self._reserved_ports:
+            raise ProcessError(
+                f"Stream names must be unique. '{stream.name}' already exists."
+            )
+        if stream.port in self._reserved_ports.values():
+            raise ProcessError(
+                f"Port {stream.port} of stream '{stream.name}' is already in use."
+            )
+
+        port = stream.port or find_free_port(
+            self.config["streams_starting_port"], self._reserved_ports.values()
+        )
+        stream_id = str(uuid.uuid1())
+        stream_options = [
+            "video-streamer",
+            "-uri",
+            stream.uri,
+            "-hs",
+            "localhost",
+            "-p",
+            str(port),
+            "-of",
+            "MPEG1",
+            "-q",
+            str(stream.quality),
+            "-id",
+            stream_id,
+        ]
+        if stream.size:
+            stream_options.extend(["-s", stream.size])
+        if stream.auth:
+            stream_options.extend(
+                [
+                    "-auth",
+                    stream.auth.type,
+                    "-user",
+                    stream.auth.username,
+                    "-pass",
+                    stream.auth.password,
+                ]
+            )
+
+        self._stream_processes[stream.name] = subprocess.Popen(
+            stream_options, close_fds=True, preexec_fn=stop_with_parent
+        )
+        self._reserved_ports[stream.name] = port
+        self._logger.info(f"started stream {stream.name} on port {port}")
+        self.add_stream(stream.name, port, stream_id)
+
+    def stop_streams(self, names: List[str]) -> None:
+        """Stop the video-streamers of the given streams and remove them from the
+        streams layer. video-streamer stops its own children (ffmpeg, image
+        polling) on SIGTERM, anything still alive after wait_time is killed"""
+        stopping = []
+        for name in names:
+            process = self._stream_processes.pop(name)
+            self.remove_stream(name)
+            self._reserved_ports.pop(name, None)
+
+            try:
+                parent = psutil.Process(process.pid)
+                # collect children now, they are reparented once the parent exits
+                stopping.extend([parent] + parent.children(recursive=True))
+            except psutil.NoSuchProcess:
+                self._logger.warning(f"stream {name} was not running anymore")
+                continue
+            process.terminate()
+
+        _, alive = psutil.wait_procs(stopping, timeout=self.config["wait_time"])
+        for p in alive:
+            self._logger.warning(f"Killing stream process {p.pid}, did not stop")
+            with contextlib.suppress(psutil.NoSuchProcess):
+                p.kill()
+        psutil.wait_procs(alive, timeout=self.config["wait_time"])
+        self._logger.info(f"stopped streams {names}")
 
     def load_worker_classes(self):
         worker_classes_config = self.config["worker_classes"]
@@ -172,13 +283,19 @@ class Spawner:
             raise ProcessError(
                 f"Process names must be unique. '{name}' already exists. Either terminate '{name}' or choose a different unique name"
             )
+        if type in self._streamer_types and name in self._streams:
+            raise ProcessError(
+                f"Stream names must be unique. A stream '{name}' already exists."
+            )
         if type not in self._worker_classes:
             raise ProcessError(f"Type {type} does not exist")
         # check if somebody tries to start a restricted worker type from outside this class
         if not self.check_restricted_access(type):
             raise ProcessError(f"Worker of type {type} can only be started by server.")
 
-        free_port = find_free_port(self.config["streams_starting_port"])
+        free_port = find_free_port(
+            self.config["streams_starting_port"], self._reserved_ports.values()
+        )
         settings = self._settings_manager.dict()
         logger = configure_logger(name, type, self.config["log_dir"])
         worker_instance = self.create_worker(type, free_port, settings, logger)
@@ -190,6 +307,7 @@ class Spawner:
         self._logger.info(f"started {name} of type {type}")
         p.start()
         if isinstance(worker_instance, Streamer):
+            self._reserved_ports[name] = free_port
             self.add_stream(name, free_port, worker_instance.get_stream_id())
         self.add_process(name, type, p, command_queue, response_queue, settings)
 
@@ -236,6 +354,7 @@ class Spawner:
 
             if worker_type in self._streamer_types:
                 self.remove_stream(name)
+                self._reserved_ports.pop(name, None)
 
             self._logger.info(f"terminated {name} of type {worker_type}")
             if (

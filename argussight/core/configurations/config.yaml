@@ -27,6 +27,22 @@ processes:
   - name: "Recorder"
     type: video_recorder
 
+# Camera streams started by argussight, each runs its own video-streamer
+# and is added to the streams layer under its unique name.
+# Only name and uri are required. If no port is given, a free port is used
+# (see streams_starting_port). size is "width, height", camera size if unset
+# streams:
+#   - name: "Camera"
+#     uri: "test"
+#     port: 8000
+#     quality: 4
+#     size: "659, 493"
+#     auth:
+#       type: "Basic"
+#       username: "user"
+#       password: "pass"
+streams: []
+
 # This indicates the maximal waiting time (s),
 # the spawner waits on responds from processes, before killing them
 wait_time: 5
