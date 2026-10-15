@@ -30,6 +30,25 @@ There are two ways to add/remove streams to/from the Abstraction-Layer, dependin
 
 One option is to run a process within Argussight. In this case, ensure that your process inherits from the [Streamer](vprocess.md#streamer) class. This allows Argussight's [Spawner](spawner.md) to manage the stream, ensuring it is correctly added and removed when your process is created and terminated. The stream can be accessed by using the [unique name](vprocess.md#) of the process. For more details on accessing the streams from the Abstraction-Layer, see [below](#access-streams).
 
+### As a camera stream in the root configuration
+
+Camera streams that should be available without any processing can be listed under `streams` in the [root configuration file](../usage/configurations.md#root-configuration). When Argussight starts, it runs one [MXCuBE Video-Streamer](https://github.com/mxcube/video-streamer) (*MPEG1*) per entry and adds it to the Abstraction-Layer under its `name`.
+
+```yaml
+streams:
+  - name: "Camera"      # unique stream name, required
+    uri: "test"         # input uri passed to video-streamer, required
+    port: 8000          # optional, a free port from streams_starting_port is used if unset
+    quality: 4          # optional
+    size: "659, 493"    # optional "width, height", camera size if unset
+    auth:               # optional
+      type: "Basic"     # "Basic" or "Digest"
+      username: "user"
+      password: "pass"
+```
+
+These streams are stopped and removed from the Abstraction-Layer when Argussight shuts down. On Linux they are also stopped by the kernel if Argussight dies unexpectedly (e.g. `SIGKILL`).
+
 ### From outside the Argussight architecture
 
 Argussight supports adding any stream to the Abstraction-Layer. Streams can be added through the corresponding gRPC request ([AddStreamRequest](../usage/grpc.md#available-requests)). While any *MJPEG* or *MPEG1* stream can be added, we highly recommend using [MXCuBE's Video-Streamer](https://github.com/mxcube/video-streamer) to generate the stream. Below is an example of how to generate and add a stream to the Abstraction-Layer via the [gRPC](../usage/grpc.md) connection.

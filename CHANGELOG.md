@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `streams` section in the root configuration to start camera streams (video-streamer) with argussight and add them to the streams layer
+- Camera streams are stopped when argussight shuts down, and on Linux also when argussight is killed
+
 ### Changed
 
 - Improved default logging to files behavior by increasing log verbosity and enabling Uviocrn `INFO` logs
