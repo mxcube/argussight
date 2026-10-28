@@ -6,7 +6,7 @@ import os
 import queue
 import signal
 from logging import Logger
-from typing import Dict
+from typing import Dict, Set
 
 import uvicorn
 import websockets
@@ -18,6 +18,11 @@ app = FastAPI()
 
 active_streams: Dict[str, Dict[str, any]] = {}
 client_queues: Dict[WebSocket, asyncio.Queue] = {}
+# clients that already got a dropped chunk, so the warning is logged only once
+slow_clients: Set[WebSocket] = set()
+
+# chunks buffered per client, upstream chunks are often smaller than a frame
+CLIENT_QUEUE_SIZE = 200
 
 shutdown_event = asyncio.Event()
 logger: Logger = Logger("StreamsProxy")  # Placeholder, will be configured in run()
@@ -59,6 +64,7 @@ async def remove_stream(path: str) -> Dict[str, str]:
     clients = stream.get("clients", set())
     for client in clients:
         client_queues.pop(client, None)
+        slow_clients.discard(client)
         await client.close(code=1000, reason="Stream removed by server")
 
     if task:
@@ -153,7 +159,11 @@ async def upstream_worker(path: str, url: str):
                                     q.put_nowait(data)
                                 reconnection_tries = 0  # Reset on successful send
                             except asyncio.QueueFull:
-                                logger.warning("Dropping frame for slow client")
+                                if client not in slow_clients:
+                                    slow_clients.add(client)
+                                    logger.warning(
+                                        f"Dropping frames for slow client on {path}"
+                                    )
         except asyncio.CancelledError:
             logger.info(f"Upstream worker for {path} cancelled")
             break
@@ -187,7 +197,7 @@ async def websocket_proxy(websocket: WebSocket, path: str):
     await websocket.accept()
     logger.info(f"Client connected to {path}")
 
-    q = asyncio.Queue(maxsize=5)
+    q = asyncio.Queue(maxsize=CLIENT_QUEUE_SIZE)
     client_queues[websocket] = q
     stream_data["clients"].add(websocket)
 
@@ -212,6 +222,7 @@ async def websocket_proxy(websocket: WebSocket, path: str):
     finally:
         stream_data["clients"].discard(websocket)
         client_queues.pop(websocket, None)
+        slow_clients.discard(websocket)
         await websocket.close()
 
 
@@ -245,7 +256,7 @@ def run(
         os.path.join(log_dir, "Uvicorn"),
         propagate=False,
         add_to_shared=False,
-        file_level=logging.INFO,
+        level=logging.INFO,
     )
     configure_logger(
         "uvicorn.access",

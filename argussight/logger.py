@@ -28,10 +28,11 @@ def configure_logger(
     propagate: bool = True,
     add_to_shared: bool = True,
     file_level: int = logging.DEBUG,
+    level: int = logging.DEBUG,
 ) -> logging.Logger:
     """Configures/Creates a single logger."""
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
     logger.propagate = propagate
 
     if logger.handlers:
