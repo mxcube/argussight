@@ -1,0 +1,15 @@
+---
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    # "/" checks the workflow files in .github/workflows
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
