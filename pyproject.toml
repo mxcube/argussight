@@ -7,7 +7,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 readme = "README.md"
 keywords = ["MXCuBEWeb", "video streaming", "computer vision", "multistream", "process management"]
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.11,<3.13"
 dependencies = [
     "colorlog>=6.9.0,<7",
     "fastapi>=0.138.0,<0.139",
