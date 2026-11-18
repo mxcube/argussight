@@ -29,6 +29,15 @@ repos:
       # This hook fails if it results in modifying `poetry.lock`.
       - id: poetry-lock
 
+  - repo: local
+    hooks:
+      - id: deptry
+        name: deptry
+        entry: poetry run deptry .
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|.*\.py)$
+
   - repo: https://github.com/myint/autoflake
     rev: v2.3.1
     hooks:

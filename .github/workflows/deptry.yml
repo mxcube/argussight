@@ -1,0 +1,48 @@
+---
+
+name: Check Dependencies with deptry
+
+# yamllint disable
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "**.py"
+      - pyproject.toml
+      - poetry.lock
+      - .github/workflows/deptry.yml
+  pull_request:
+    paths:
+      - "**.py"
+      - pyproject.toml
+      - poetry.lock
+      - .github/workflows/deptry.yml
+# yamllint enable
+
+permissions:
+  contents: read
+
+jobs:
+  deptry:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Install Poetry
+        # keep in sync with .pre-commit-config.yaml and conda-environment.yml
+        run: pipx install poetry==2.5.1
+
+      - name: Set Up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: poetry
+
+      - name: Install Dependencies
+        run: poetry install --with dev --no-root
+
+      - name: Run deptry
+        run: poetry run deptry .
