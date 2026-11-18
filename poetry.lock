@@ -87,7 +87,7 @@ description = "Timeout context manager for asyncio programs"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "python_full_version <= \"3.11.2\""
+markers = "python_version == \"3.11\" and python_full_version <= \"3.11.2\""
 files = [
     {file = "async_timeout-5.0.1-py3-none-any.whl", hash = "sha256:39e3809566ff85354557ec2398b55e096c8364bacac9405a7a1fa429e77fe76c"},
     {file = "async_timeout-5.0.1.tar.gz", hash = "sha256:d9321a7a3d5a6a5e187e824d2fa0793ce379a202935782d555d6e9d2735677d3"},
@@ -1526,7 +1526,10 @@ files = [
 ]
 
 [package.dependencies]
-numpy = {version = ">=1.23.5", markers = "python_version >= \"3.11\""}
+numpy = [
+    {version = ">=1.23.5", markers = "python_version == \"3.11\""},
+    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
+]
 
 [[package]]
 name = "packaging"
@@ -2994,5 +2997,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.11,<3.12"
-content-hash = "0475d1f4dfc9d1a21d2d2ea1d59b02e8f1e59212c587f79aa702e8e5c9afb559"
+python-versions = ">=3.11,<3.13"
+content-hash = "ffabe46eea08022fc04a7339074ce502e0bf38d5ecf01a741d60cde02153367a"

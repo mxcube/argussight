@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `streams` section in the root configuration to start camera streams (video-streamer) with argussight and add them to the streams layer
 - Camera streams are stopped when argussight shuts down, and on Linux also when argussight is killed
+- support for python 3.12
 
 ### Removed
 
