@@ -4,7 +4,7 @@ import socket
 import sys
 from typing import Iterable, Union
 
-import Levenshtein
+from rapidfuzz.distance import Levenshtein
 
 PR_SET_PDEATHSIG = 1
 
