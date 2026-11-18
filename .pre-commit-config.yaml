@@ -10,7 +10,7 @@ repos:
           - --strict
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 2.0.1
+    rev: 2.5.1  # keep in sync with conda-environment.yml and pyproject.toml
     hooks:
 
       # Equivalent to running `poetry check --lock`.

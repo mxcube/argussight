@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install mkdocs mkdocs-macros-plugin
+          pip install --group docs
 
       - name: Build and Deploy
         run: |
